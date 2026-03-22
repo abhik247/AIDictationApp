@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AIDictationApp (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "AIDictationApp (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
