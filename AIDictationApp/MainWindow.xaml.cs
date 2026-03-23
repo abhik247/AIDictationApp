@@ -5,7 +5,6 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
 using System.Drawing;
 using System;
 using System.ComponentModel;
@@ -16,22 +15,21 @@ namespace AIDictationApp.Views
 {
     public sealed partial class MainWindow : Window
     {
-        private MicaBackdrop micaBackdrop;
+        private readonly MicaBackdrop _micaBackdrop;
 
         private delegate IntPtr WinProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
         private WinProc? newWndProc;
         private IntPtr oldWndProc = IntPtr.Zero;
+        private bool _hotkeyRegistered;
         private WinForms.NotifyIcon? _trayIcon;
+        private FloatingRecorderButtonForm? _floatingButton;
         private bool _isExitingFromTray;
-
-        // 🔥 NEW: ViewModel + Animation references
-        private MainViewModel _vm;
+        private readonly MainViewModel _vm;
 
         public MainWindow()
         {
             this.InitializeComponent();
 
-            // 🔥 UPDATED: Store ViewModel reference
             _vm = new MainViewModel();
 
             _vm.OnTranscribedTextReceived = text =>
@@ -101,29 +99,84 @@ namespace AIDictationApp.Views
                 await dialog.ShowAsync();
             };
 
+            _vm.PropertyChanged += Vm_PropertyChanged;
+
             if (this.Content is FrameworkElement rootElement)
             {
                 rootElement.DataContext = _vm;
             }
 
-            micaBackdrop = new MicaBackdrop();
-            this.SystemBackdrop = micaBackdrop;
+            _micaBackdrop = new MicaBackdrop();
+            this.SystemBackdrop = _micaBackdrop;
 
             this.AppWindow.Resize(new Windows.Graphics.SizeInt32(700, 800));
+            this.AppWindow.SetIcon(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app-icon.ico"));
             ApplyAlwaysOnTop(_vm.AlwaysOnTop);
             InitializeTrayIcon();
+            InitializeFloatingButton();
 
             this.AppWindow.Closing += AppWindow_Closing;
             this.Closed += MainWindow_Closed;
             this.Activated += MainWindow_Activated;
         }
 
+        private void InitializeFloatingButton()
+        {
+            _floatingButton = new FloatingRecorderButtonForm();
+            _floatingButton.ToggleRequested += (_, _) => ExecuteRecordingToggle();
+            _floatingButton.SetRecordingState(false);
+            _floatingButton.Hide();
+        }
+
+        private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MainViewModel.State))
+            {
+                _floatingButton?.SetRecordingState(_vm.State == RecordingState.Recording);
+            }
+        }
+
+        private void ExecuteRecordingToggle()
+        {
+            if (_vm.State == RecordingState.Recording)
+            {
+                if (_vm.SendAndInsertCommand.CanExecute(null))
+                    _vm.SendAndInsertCommand.Execute(null);
+            }
+            else
+            {
+                if (_vm.RecordCommand.CanExecute(null))
+                    _vm.RecordCommand.Execute(null);
+            }
+        }
+
+        private void ShowFloatingButton()
+        {
+            if (_floatingButton == null || _floatingButton.Visible)
+                return;
+
+            _floatingButton.Show();
+        }
+
+        private void HideFloatingButton()
+        {
+            if (_floatingButton == null || !_floatingButton.Visible)
+                return;
+
+            _floatingButton.Hide();
+        }
+
         private void InitializeTrayIcon()
         {
+            var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app-icon.ico");
+            var appIcon = System.IO.File.Exists(iconPath)
+                ? new Icon(iconPath)
+                : SystemIcons.Application;
+
             _trayIcon = new WinForms.NotifyIcon
             {
                 Text = "AI Dictation",
-                Icon = SystemIcons.Application,
+                Icon = appIcon,
                 Visible = true
             };
 
@@ -137,6 +190,7 @@ namespace AIDictationApp.Views
 
         private void ShowFromTray()
         {
+            HideFloatingButton();
             this.AppWindow.Show();
             if (this.AppWindow.Presenter is OverlappedPresenter presenter)
             {
@@ -149,6 +203,7 @@ namespace AIDictationApp.Views
         private void HideToTray()
         {
             this.AppWindow.Hide();
+            ShowFloatingButton();
             _trayIcon?.ShowBalloonTip(1500, "AI Dictation", "Still running in the background. Use the tray icon to reopen.", WinForms.ToolTipIcon.Info);
         }
 
@@ -172,7 +227,31 @@ namespace AIDictationApp.Views
 
         private void MainWindow_Closed(object sender, WindowEventArgs args)
         {
+            RestoreWindowProcedure();
+            UnregisterHotkey();
+            _vm.PropertyChanged -= Vm_PropertyChanged;
+            DisposeFloatingButton();
             DisposeTrayIcon();
+        }
+
+        private void RestoreWindowProcedure()
+        {
+            if (oldWndProc == IntPtr.Zero)
+                return;
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            SetWindowLongPtr(hwnd, GWLP_WNDPROC, oldWndProc);
+            oldWndProc = IntPtr.Zero;
+            newWndProc = null;
+        }
+
+        private void UnregisterHotkey()
+        {
+            if (!_hotkeyRegistered)
+                return;
+
+            HotkeyManager.Unregister(this);
+            _hotkeyRegistered = false;
         }
 
         private void DisposeTrayIcon()
@@ -183,6 +262,16 @@ namespace AIDictationApp.Views
             _trayIcon.Visible = false;
             _trayIcon.Dispose();
             _trayIcon = null;
+        }
+
+        private void DisposeFloatingButton()
+        {
+            if (_floatingButton == null)
+                return;
+
+            _floatingButton.Hide();
+            _floatingButton.Dispose();
+            _floatingButton = null;
         }
 
         private void ApplyAlwaysOnTop(bool isAlwaysOnTop)
@@ -199,6 +288,7 @@ namespace AIDictationApp.Views
                 return;
 
             HotkeyManager.Register(this);
+            _hotkeyRegistered = true;
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
 
             newWndProc = new WinProc(WndProc);
@@ -208,17 +298,32 @@ namespace AIDictationApp.Views
         private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
             const int WM_HOTKEY = 0x0312;
+            const int WM_SIZE = 0x0005;
+            const int SIZE_MINIMIZED = 1;
 
             if (msg == WM_HOTKEY)
             {
-                if (_vm != null)
+                ExecuteRecordingToggle();
+            }
+
+            if (msg == WM_SIZE)
+            {
+                if (wParam.ToInt32() == SIZE_MINIMIZED)
                 {
-                    if (_vm.RecordCommand.CanExecute(null))
-                        _vm.RecordCommand.Execute(null);
+                    ShowFloatingButton();
+                }
+                else
+                {
+                    HideFloatingButton();
                 }
             }
 
-            return CallWindowProc(oldWndProc, hWnd, msg, wParam, lParam);
+            if (oldWndProc != IntPtr.Zero)
+            {
+                return CallWindowProc(oldWndProc, hWnd, msg, wParam, lParam);
+            }
+
+            return IntPtr.Zero;
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)

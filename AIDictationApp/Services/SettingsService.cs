@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using AIDictationApp.Models;
 
@@ -9,6 +10,7 @@ namespace AIDictationApp.Services
     public class SettingsService
     {
         private readonly string _settingsPath;
+        private readonly SemaphoreSlim _saveLock = new(1, 1);
         private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
 
         public SettingsService()
@@ -33,9 +35,16 @@ namespace AIDictationApp.Services
                 return newSettings;
             }
 
-            var json = File.ReadAllText(_settingsPath);
-
-            var settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+            AppSettings settings;
+            try
+            {
+                var json = File.ReadAllText(_settingsPath);
+                settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+            }
+            catch
+            {
+                settings = new AppSettings();
+            }
 
             if (settings.RewordingPrompts == null || settings.RewordingPrompts.Count == 0)
             {
@@ -55,7 +64,19 @@ namespace AIDictationApp.Services
         public async Task SaveAsync(AppSettings settings)
         {
             var json = JsonSerializer.Serialize(settings, _jsonOptions);
-            await File.WriteAllTextAsync(_settingsPath, json);
+            await _saveLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await File.WriteAllTextAsync(_settingsPath, json).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Swallow persistence failures to avoid breaking the UI flow.
+            }
+            finally
+            {
+                _saveLock.Release();
+            }
         }
 
         private void PopulateDefaultPrompts(AppSettings settings)

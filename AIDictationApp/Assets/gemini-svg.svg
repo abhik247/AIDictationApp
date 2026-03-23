@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="fluent-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A" /> <stop offset="50%" stop-color="#4C1D95" /> <stop offset="100%" stop-color="#0F172A" /> </linearGradient>
+    
+    <linearGradient id="mic-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect x="32" y="32" width="448" height="448" rx="110" fill="url(#fluent-bg)" filter="url(#shadow)"/>
+
+  <rect x="206" y="110" width="100" height="170" rx="50" fill="url(#mic-gradient)" filter="url(#shadow)"/>
+
+  <path d="M 146 220 v 30 a 110 110 0 0 0 220 0 v -30" fill="none" stroke="#22D3EE" stroke-width="28" stroke-linecap="round" filter="url(#glow)"/>
+  
+  <line x1="256" y1="375" x2="256" y2="430" stroke="#22D3EE" stroke-width="28" stroke-linecap="round" filter="url(#glow)"/>
+  <line x1="170" y1="430" x2="342" y2="430" stroke="#22D3EE" stroke-width="28" stroke-linecap="round" filter="url(#glow)"/>
+
+  <path d="M 350 120 Q 380 120 380 90 Q 380 120 410 120 Q 380 120 380 150 Q 380 120 350 120 Z" fill="#FBBF24" filter="url(#glow)"/>
+  
+  <path d="M 100 200 Q 120 200 120 180 Q 120 200 140 200 Q 120 200 120 220 Q 120 200 100 200 Z" fill="#FBBF24" filter="url(#glow)"/>
+</svg>

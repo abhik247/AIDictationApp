@@ -11,7 +11,7 @@
   <Identity
     Name="ae91f5f2-5f1f-4cc4-a3b2-db50c710b41c"
     Publisher="CN=abhik"
-    Version="1.0.0.0" />
+    Version="2.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="ae91f5f2-5f1f-4cc4-a3b2-db50c710b41c" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -49,5 +49,7 @@
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
     <systemai:Capability Name="systemAIModels"/>
+    <Capability Name="internetClient"/>
+    <DeviceCapability Name="microphone"/>
   </Capabilities>
 </Package>

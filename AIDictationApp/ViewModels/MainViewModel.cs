@@ -21,6 +21,9 @@ namespace AIDictationApp.ViewModels
     }
     public class MainViewModel : BaseViewModel
     {
+        private static readonly System.Collections.Generic.IReadOnlyList<string> s_availableLanguages =
+            new[] { "English", "Bengali (bn-IN)", "Hindi" };
+
         private readonly AudioRecorder _recorder;
         private readonly OpenAIService _openAI;
         private readonly RewordService _rewordService;
@@ -215,7 +218,7 @@ namespace AIDictationApp.ViewModels
             set { SetProperty(ref _rewordingModel, value); _settings.RewordingModel = value; _ = _settingsService.SaveAsync(_settings); }
         }
 
-        public System.Collections.Generic.List<string> AvailableLanguages => new() { "English", "Bengali (bn-IN)", "Hindi" };
+        public System.Collections.Generic.IReadOnlyList<string> AvailableLanguages => s_availableLanguages;
 
         private string _inputLanguage = "English";
         public string InputLanguage
@@ -261,6 +264,7 @@ namespace AIDictationApp.ViewModels
 
         public ICommand RecordCommand { get; }
         public ICommand SendCommand { get; }
+        public ICommand SendAndInsertCommand { get; }
         public ICommand TrashCommand { get; }
         public ICommand PauseCommand { get; }
         public ICommand RewordCommand { get; }
@@ -366,7 +370,8 @@ namespace AIDictationApp.ViewModels
             _rewordService = new RewordService();
 
             RecordCommand = new RelayCommand(HandleRecord);
-            SendCommand = new RelayCommand(async () => await SendForTranscriptionAsync());
+            SendCommand = new RelayCommand(async () => await SendForTranscriptionAsync(false));
+            SendAndInsertCommand = new RelayCommand(async () => await SendForTranscriptionAsync(true));
             TrashCommand = new RelayCommand(DeleteRecording);
             PauseCommand = new RelayCommand(TogglePause);
             RewordCommand = new RelayCommand(RewordText);
@@ -594,7 +599,7 @@ namespace AIDictationApp.ViewModels
             };
         }
 
-        private async Task SendForTranscriptionAsync()
+        private async Task SendForTranscriptionAsync(bool insertIntoActiveApp)
         {
             if (State != RecordingState.Recording) return;
 
@@ -636,6 +641,11 @@ namespace AIDictationApp.ViewModels
                 }
 
                 OnTranscribedTextReceived?.Invoke(text);
+
+                if (insertIntoActiveApp && !string.IsNullOrWhiteSpace(text))
+                {
+                    await InsertTextAsync(text, true);
+                }
             }
             catch (Exception ex)
             {
@@ -657,8 +667,6 @@ namespace AIDictationApp.ViewModels
             if (_recorder.IsRecording)
             {
                 _recorder.StopRecording();
-                // small wait might be needed for NAudio to close; keep simple
-                Task.Delay(150).Wait();
             }
 
             // delete temp file
@@ -731,13 +739,24 @@ namespace AIDictationApp.ViewModels
             if (string.IsNullOrWhiteSpace(textToInsert))
                 return;
 
+            await InsertTextAsync(textToInsert, true);
+        }
+
+        private async Task InsertTextAsync(string textToInsert, bool hideWindowFirst)
+        {
+            if (string.IsNullOrWhiteSpace(textToInsert))
+                return;
+
             var package = new DataPackage();
             package.SetText(textToInsert);
             Clipboard.SetContent(package);
             Clipboard.Flush(); // Flush to clipboard so it is ready immediately
 
-            // Hide the window so the previous application regains focus
-            HideWindowAction?.Invoke();
+            if (hideWindowFirst)
+            {
+                // Hide the window so the previous application regains focus
+                HideWindowAction?.Invoke();
+            }
 
             // Give the OS time to restore focus to the underlying application
             await Task.Delay(500);
