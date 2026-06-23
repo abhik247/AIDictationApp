@@ -12,6 +12,7 @@
             <helpers:IdleStateToVisibilityConverter x:Key="IdleStateToVisibility"/>
             <helpers:PauseIconConverter x:Key="PauseIconConverter"/>
             <helpers:RecordingTimeFormatConverter x:Key="RecordingTimeFormatConverter"/>
+
             <Style x:Key="RoundIconButton" TargetType="Button">
                 <Setter Property="Width" Value="64"/>
                 <Setter Property="Height" Value="64"/>
@@ -54,42 +55,19 @@
                     </Button>
                 </Grid>
 
-                <TextBlock
-                    Text="Microphone Level"
-                    FontWeight="SemiBold"/>
+                <TextBlock Text="Microphone Level" FontWeight="SemiBold"/>
 
-                <ProgressBar
-                    Value="{Binding AudioLevel}"
-                    Minimum="0"
-                    Maximum="100"
-                    Height="8"
-                    IsIndeterminate="False"/>
+                <ProgressBar Value="{Binding AudioLevel}" Minimum="0" Maximum="100" Height="8" IsIndeterminate="False"/>
 
-                <TextBlock
-                    Text="Transcript"
-                    FontWeight="SemiBold"/>
+                <TextBlock Text="Transcript" FontWeight="SemiBold"/>
 
             </StackPanel>
 
-            <TextBox
-                x:Name="TranscriptTextBox"
-                Grid.Row="1"
-                Margin="0,18,0,18"
-                Text="{Binding Transcript, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                AcceptsReturn="True"
-                ScrollViewer.VerticalScrollBarVisibility="Auto"
-                TextWrapping="Wrap"
-                CornerRadius="8"
-                PlaceholderText="Your transcript will appear here"/>
+            <TextBox x:Name="TranscriptTextBox" Grid.Row="1" Margin="0,18,0,18" Text="{Binding Transcript, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" CornerRadius="8" PlaceholderText="Your transcript will appear here"/>
 
-            <StackPanel
-                Grid.Row="2"
-                Orientation="Vertical"
-                Spacing="12">
+            <StackPanel Grid.Row="2" Orientation="Vertical" Spacing="12">
 
-                <StackPanel
-                    Orientation="Horizontal"
-                    Spacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="12">
                     <StackPanel.ChildrenTransitions>
                         <TransitionCollection>
                             <RepositionThemeTransition/>
@@ -97,13 +75,7 @@
                         </TransitionCollection>
                     </StackPanel.ChildrenTransitions>
 
-                    <Button
-                        Content="{Binding RecordButtonText}"
-                        Command="{Binding RecordCommand}"
-                        Visibility="{Binding State, Converter={StaticResource IdleStateToVisibility}}"
-                        CornerRadius="20"
-                        Height="45"
-                        FontSize="16"/>
+                    <Button Content="{Binding RecordButtonText}" Command="{Binding RecordCommand}" Visibility="{Binding State, Converter={StaticResource IdleStateToVisibility}}" CornerRadius="20" Height="45" FontSize="16"/>
 
                     <StackPanel Orientation="Horizontal" Spacing="12" Visibility="{Binding State, Converter={StaticResource RecordedStateToVisibility}}">
                         <StackPanel.ChildrenTransitions>
@@ -113,21 +85,11 @@
                             </TransitionCollection>
                         </StackPanel.ChildrenTransitions>
 
-                        <Button
-                            Command="{Binding TrashCommand}"
-                            CornerRadius="20"
-                            Height="45"
-                            Width="60"
-                            ToolTipService.ToolTip="Discard">
+                        <Button Command="{Binding TrashCommand}" CornerRadius="20" Height="45" Width="60" ToolTipService.ToolTip="Discard">
                             <TextBlock Text="🗑" FontSize="18"/>
                         </Button>
 
-                        <Button
-                            Command="{Binding SendCommand}"
-                            CornerRadius="20"
-                            Height="45"
-                            MinWidth="140"
-                            Background="{ThemeResource AccentFillColorDefaultBrush}">
+                        <Button Command="{Binding SendCommand}" CornerRadius="20" Height="45" MinWidth="140" Background="{ThemeResource AccentFillColorDefaultBrush}">
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <TextBlock Text="➤" FontSize="18" VerticalAlignment="Center" FontWeight="Bold"/>
                                 <TextBlock Text="Send" FontSize="16" VerticalAlignment="Center" FontWeight="SemiBold"/>
@@ -135,34 +97,21 @@
                             </StackPanel>
                         </Button>
 
-                        <Button
-                            Command="{Binding PauseCommand}"
-                            CornerRadius="20"
-                            Height="45"
-                            Width="60"
-                            ToolTipService.ToolTip="Pause/Resume">
+                        <Button Command="{Binding PauseCommand}" CornerRadius="20" Height="45" Width="60" ToolTipService.ToolTip="Pause/Resume">
                             <TextBlock Text="{Binding IsPaused, Converter={StaticResource PauseIconConverter}}" FontSize="18"/>
                         </Button>
 
                     </StackPanel>
 
-                    <Button
-                        Command="{Binding UndoCommand}"
-                        CornerRadius="8"
-                        ToolTipService.ToolTip="Undo">
+                    <Button Command="{Binding UndoCommand}" CornerRadius="8" ToolTipService.ToolTip="Undo">
                         <FontIcon Glyph="&#xE7A7;" FontSize="16"/>
                     </Button>
 
-                    <Button
-                        Command="{Binding RedoCommand}"
-                        CornerRadius="8"
-                        ToolTipService.ToolTip="Redo">
+                    <Button Command="{Binding RedoCommand}" CornerRadius="8" ToolTipService.ToolTip="Redo">
                         <FontIcon Glyph="&#xE7A6;" FontSize="16"/>
                     </Button>
 
-                    <Button
-                        Content="Reword"
-                        CornerRadius="8">
+                    <Button Content="Reword" CornerRadius="8">
                         <Button.Flyout>
                             <Flyout>
                                 <Grid MaxWidth="400">
@@ -174,12 +123,7 @@
                                     <ItemsControl ItemsSource="{Binding RewordingPrompts}" Grid.Row="1">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Content="{Binding Name}"
-                                                        Command="{Binding ApplyCommand}"
-                                                        Margin="0,0,5,5"
-                                                        HorizontalAlignment="Stretch"
-                                                        HorizontalContentAlignment="Left"
-                                                        CornerRadius="6"/>
+                                                <Button Content="{Binding Name}" Command="{Binding ApplyCommand}" Margin="0,0,5,5" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" CornerRadius="6"/>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                         <ItemsControl.ItemsPanel>
@@ -197,46 +141,20 @@
 
                 <StackPanel Orientation="Horizontal" Spacing="12">
 
-                    <Button
-                        Content="Insert"
-                        Command="{Binding InsertCommand}"
-                        CornerRadius="8"
-                        Background="{ThemeResource AccentFillColorDefaultBrush}"
-                        FontWeight="SemiBold"/>
+                    <Button Content="Insert" Command="{Binding InsertCommand}" CornerRadius="8" Background="{ThemeResource AccentFillColorDefaultBrush}" FontWeight="SemiBold"/>
 
-                    <Button
-                        Content="Copy"
-                        Command="{Binding CopyCommand}"
-                        CornerRadius="8"/>
+                    <Button Content="Copy" Command="{Binding CopyCommand}" CornerRadius="8"/>
 
-                    <Button
-                        Content="Select All"
-                        Command="{Binding SelectAllCommand}"
-                        CornerRadius="8"/>
+                    <Button Content="Select All" Command="{Binding SelectAllCommand}" CornerRadius="8"/>
 
-                    <Button
-                        Content="Clear All"
-                        Command="{Binding ClearAllCommand}"
-                        CornerRadius="8"/>
+                    <Button Content="Clear All" Command="{Binding ClearAllCommand}" CornerRadius="8"/>
                 </StackPanel>
 
             </StackPanel>
 
         </Grid>
 
-        <!-- Overlay Settings Panel -->
-        <Border x:Name="SettingsPanel"
-                Visibility="Collapsed"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Margin="0,50,0,0"
-                Width="Auto"
-                MinWidth="300"
-                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="16">
+        <Border x:Name="SettingsPanel" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,50,0,0" Width="Auto" MinWidth="300" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -260,20 +178,10 @@
             </Grid>
         </Border>
 
-        <!-- Overlay API Settings Panel -->
-        <Border x:Name="ApiSettingsPanel"
-                Visibility="Collapsed"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Margin="0,50,0,0"
-                Width="Auto"
-                MinWidth="350"
-                MaxWidth="500"
-                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="16">
+        <Border x:Name="ApiSettingsPanel" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,50,0,0" Width="Auto" MinWidth="350" MaxWidth="500" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+            <Border.Resources>
+                <helpers:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+            </Border.Resources>
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -293,42 +201,51 @@
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="8" Padding="0,0,10,0">
-                        <TextBlock Text="Transcription API Settings" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,0"/>
-                        <TextBlock Text="API Key" FontWeight="SemiBold"/>
-                        <TextBox Text="{Binding TranscriptionApiKey, Mode=TwoWay}" PlaceholderText="Enter API key" CornerRadius="8"/>
-                        <TextBlock Text="Custom Server Host" FontWeight="SemiBold"/>
-                        <TextBox Text="{Binding TranscriptionHost, Mode=TwoWay}" PlaceholderText="e.g. https://api.openai.com/v1" CornerRadius="8"/>
-                        <TextBlock Text="Model" FontWeight="SemiBold"/>
-                        <TextBox Text="{Binding TranscriptionModel, Mode=TwoWay}" PlaceholderText="e.g. whisper-1" CornerRadius="8"/>
 
-                        <MenuFlyoutSeparator Margin="0,16"/>
+                        <!-- ═══ Transcription Section ═══ -->
+                        <TextBlock Text="Transcription" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,4"/>
+                        <ComboBox Header="Provider" ItemsSource="{Binding AvailableProviders}" SelectedItem="{Binding TranscriptionProvider, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,8" />
 
-                        <TextBlock Text="Rewording API Settings" FontWeight="SemiBold" FontSize="16" Margin="0,4,0,0"/>
-                        <TextBlock Text="API Key" FontWeight="SemiBold"/>
-                        <TextBox Text="{Binding RewordingApiKey, Mode=TwoWay}" PlaceholderText="Enter API key" CornerRadius="8"/>
-                        <TextBlock Text="Custom Server Host" FontWeight="SemiBold"/>
-                        <TextBox Text="{Binding RewordingHost, Mode=TwoWay}" PlaceholderText="e.g. https://api.openai.com/v1" CornerRadius="8"/>
-                        <TextBlock Text="Model" FontWeight="SemiBold"/>
-                        <TextBox Text="{Binding RewordingModel, Mode=TwoWay}" PlaceholderText="e.g. gpt-4o-mini" CornerRadius="8"/>
+                        <!-- OpenAI transcription fields -->
+                        <StackPanel Spacing="8" Visibility="{Binding IsTranscriptionOpenAI, Converter={StaticResource BoolToVisibility}}">
+                            <TextBox Header="API Key" Text="{Binding TranscriptionApiKey, Mode=TwoWay}" PlaceholderText="Enter OpenAI API key"/>
+                            <TextBox Header="Host" Text="{Binding TranscriptionHost, Mode=TwoWay}" PlaceholderText="https://api.openai.com/v1"/>
+                            <TextBox Header="Model" Text="{Binding TranscriptionModel, Mode=TwoWay}" PlaceholderText="whisper-1"/>
+                        </StackPanel>
+
+                        <!-- Gemini transcription fields -->
+                        <StackPanel Spacing="8" Visibility="{Binding IsTranscriptionGemini, Converter={StaticResource BoolToVisibility}}">
+                            <TextBox Header="API Key" Text="{Binding GeminiApiKey, Mode=TwoWay}" PlaceholderText="Enter Gemini API key"/>
+                            <TextBox Header="Host" Text="{Binding GeminiHost, Mode=TwoWay}" PlaceholderText="https://generativelanguage.googleapis.com/v1beta/openai/"/>
+                            <TextBox Header="Model" Text="{Binding GeminiTranscriptionModel, Mode=TwoWay}" PlaceholderText="gemini-2.0-flash"/>
+                        </StackPanel>
+
+                        <Border Height="1" Background="{ThemeResource CardStrokeColorDefaultBrush}" Margin="0,8,0,8"/>
+
+                        <!-- ═══ Rewording Section ═══ -->
+                        <TextBlock Text="Rewording" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,4"/>
+                        <ComboBox Header="Provider" ItemsSource="{Binding AvailableProviders}" SelectedItem="{Binding RewordingProvider, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,8" />
+
+                        <!-- OpenAI rewording fields -->
+                        <StackPanel Spacing="8" Visibility="{Binding IsRewordingOpenAI, Converter={StaticResource BoolToVisibility}}">
+                            <TextBox Header="API Key" Text="{Binding RewordingApiKey, Mode=TwoWay}" PlaceholderText="Enter OpenAI API key"/>
+                            <TextBox Header="Host" Text="{Binding RewordingHost, Mode=TwoWay}" PlaceholderText="https://api.openai.com/v1"/>
+                            <TextBox Header="Model" Text="{Binding RewordingModel, Mode=TwoWay}" PlaceholderText="gpt-4o-mini"/>
+                        </StackPanel>
+
+                        <!-- Gemini rewording fields -->
+                        <StackPanel Spacing="8" Visibility="{Binding IsRewordingGemini, Converter={StaticResource BoolToVisibility}}">
+                            <TextBox Header="API Key" Text="{Binding GeminiApiKey, Mode=TwoWay}" PlaceholderText="Enter Gemini API key"/>
+                            <TextBox Header="Host" Text="{Binding GeminiHost, Mode=TwoWay}" PlaceholderText="https://generativelanguage.googleapis.com/v1beta/openai/"/>
+                            <TextBox Header="Model" Text="{Binding GeminiRewordingModel, Mode=TwoWay}" PlaceholderText="gemini-2.0-flash"/>
+                        </StackPanel>
+
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
         </Border>
 
-        <!-- Overlay Customize Prompts Panel -->
-        <Border x:Name="CustomizePromptsPanel"
-                Visibility="Collapsed"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Margin="0,50,0,0"
-                Width="Auto"
-                MinWidth="400"
-                MaxWidth="650"
-                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="16">
+        <Border x:Name="CustomizePromptsPanel" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,50,0,0" Width="Auto" MinWidth="400" MaxWidth="650" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>

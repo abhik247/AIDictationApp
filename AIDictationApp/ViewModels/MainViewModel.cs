@@ -1,4 +1,4 @@
-﻿using AIDictationApp.Helpers;
+using AIDictationApp.Helpers;
 using AIDictationApp.Models;
 using AIDictationApp.Services;
 using System;
@@ -217,7 +217,79 @@ namespace AIDictationApp.ViewModels
             get => _rewordingModel;
             set { SetProperty(ref _rewordingModel, value); _settings.RewordingModel = value; _ = _settingsService.SaveAsync(_settings); }
         }
+        // --- ADD THESE NEW PROPERTIES ---
 
+        public ApiProvider[] AvailableProviders { get; } = new[] { ApiProvider.OpenAI, ApiProvider.Gemini };
+
+        private ApiProvider _transcriptionProvider;
+        public ApiProvider TranscriptionProvider
+        {
+            get => _transcriptionProvider;
+            set
+            {
+                if (_transcriptionProvider != value)
+                {
+                    SetProperty(ref _transcriptionProvider, value);
+                    _settings.TranscriptionProvider = value;
+                    _settings.SelectedProvider = value;
+                    _ = _settingsService.SaveAsync(_settings);
+                    OnPropertyChanged(nameof(IsTranscriptionOpenAI));
+                    OnPropertyChanged(nameof(IsTranscriptionGemini));
+                }
+            }
+        }
+
+        public bool IsTranscriptionOpenAI => _transcriptionProvider == ApiProvider.OpenAI;
+        public bool IsTranscriptionGemini => _transcriptionProvider == ApiProvider.Gemini;
+
+        private ApiProvider _rewordingProvider;
+        public ApiProvider RewordingProvider
+        {
+            get => _rewordingProvider;
+            set
+            {
+                if (_rewordingProvider != value)
+                {
+                    SetProperty(ref _rewordingProvider, value);
+                    _settings.RewordingProvider = value;
+                    _settings.SelectedProvider = value;
+                    _ = _settingsService.SaveAsync(_settings);
+                    OnPropertyChanged(nameof(IsRewordingOpenAI));
+                    OnPropertyChanged(nameof(IsRewordingGemini));
+                }
+            }
+        }
+
+        public bool IsRewordingOpenAI => _rewordingProvider == ApiProvider.OpenAI;
+        public bool IsRewordingGemini => _rewordingProvider == ApiProvider.Gemini;
+
+        private string _geminiApiKey = "";
+        public string GeminiApiKey
+        {
+            get => _geminiApiKey;
+            set { SetProperty(ref _geminiApiKey, value); _settings.GeminiApiKey = value; _ = _settingsService.SaveAsync(_settings); }
+        }
+
+        private string _geminiHost = "";
+        public string GeminiHost
+        {
+            get => _geminiHost;
+            set { SetProperty(ref _geminiHost, value); _settings.GeminiHost = value; _ = _settingsService.SaveAsync(_settings); }
+        }
+
+        private string _geminiTranscriptionModel = "";
+        public string GeminiTranscriptionModel
+        {
+            get => _geminiTranscriptionModel;
+            set { SetProperty(ref _geminiTranscriptionModel, value); _settings.GeminiTranscriptionModel = value; _ = _settingsService.SaveAsync(_settings); }
+        }
+
+        private string _geminiRewordingModel = "";
+        public string GeminiRewordingModel
+        {
+            get => _geminiRewordingModel;
+            set { SetProperty(ref _geminiRewordingModel, value); _settings.GeminiRewordingModel = value; _ = _settingsService.SaveAsync(_settings); }
+        }
         public System.Collections.Generic.IReadOnlyList<string> AvailableLanguages => s_availableLanguages;
 
         private string _inputLanguage = "English";
@@ -306,7 +378,15 @@ namespace AIDictationApp.ViewModels
             _rewordingApiKey = _settings.RewordingApiKey ?? "";
             _rewordingHost = _settings.RewordingHost ?? "https://api.openai.com/v1";
             _rewordingModel = _settings.RewordingModel ?? "gpt-4o-mini";
-
+            
+            // --- ADD INITIALIZATION FOR GEMINI ---
+            _transcriptionProvider = _settings.TranscriptionProvider;
+            _rewordingProvider = _settings.RewordingProvider;
+            _geminiApiKey = _settings.GeminiApiKey ?? "";
+            _geminiHost = _settings.GeminiHost ?? "https://generativelanguage.googleapis.com/v1beta/openai/";
+            _geminiTranscriptionModel = _settings.GeminiTranscriptionModel ?? "gemini-1.5-flash";
+            _geminiRewordingModel = _settings.GeminiRewordingModel ?? "gemini-1.5-flash";
+            
             RewordingPrompts = new ObservableCollection<RewordingPrompt>(_settings.RewordingPrompts);
             bool foundActive = false;
             foreach (var prompt in RewordingPrompts)
@@ -492,7 +572,8 @@ namespace AIDictationApp.ViewModels
 
             try
             {
-                var improved = await _rewordService.RewordAsync(original, _settings.RewordingApiKey, _settings.RewordingHost, _settings.RewordingModel, _inputLanguage, prompt.Instructions);
+                var (apiKey, host, model) = GetRewordingConfig();
+                var improved = await _rewordService.RewordAsync(original, apiKey, host, model, _inputLanguage, prompt.Instructions);
 
                 if (hasSelection)
                 {
@@ -599,6 +680,20 @@ namespace AIDictationApp.ViewModels
             };
         }
 
+        private (string ApiKey, string Host, string Model) GetTranscriptionConfig()
+        {
+            return _transcriptionProvider == ApiProvider.Gemini
+                ? (_settings.GeminiApiKey, _settings.GeminiHost, _settings.GeminiTranscriptionModel)
+                : (_settings.TranscriptionApiKey, _settings.TranscriptionHost, _settings.TranscriptionModel);
+        }
+
+        private (string ApiKey, string Host, string Model) GetRewordingConfig()
+        {
+            return _rewordingProvider == ApiProvider.Gemini
+                ? (_settings.GeminiApiKey, _settings.GeminiHost, _settings.GeminiRewordingModel)
+                : (_settings.RewordingApiKey, _settings.RewordingHost, _settings.RewordingModel);
+        }
+
         private async Task SendForTranscriptionAsync(bool insertIntoActiveApp)
         {
             if (State != RecordingState.Recording) return;
@@ -622,7 +717,10 @@ namespace AIDictationApp.ViewModels
             try
             {
                 var langCode = GetLanguageCode(_inputLanguage);
-                var text = await _openAI.TranscribeAudioAsync(path, _settings.TranscriptionApiKey, _settings.TranscriptionHost, _settings.TranscriptionModel, langCode);
+                var (transApiKey, transHost, transModel) = GetTranscriptionConfig();
+                var (rewordApiKey, rewordHost, rewordModel) = GetRewordingConfig();
+
+                var text = await _openAI.TranscribeAudioAsync(path, transApiKey, transHost, transModel, langCode);
 
                 foreach (var prompt in RewordingPrompts)
                 {
@@ -630,15 +728,16 @@ namespace AIDictationApp.ViewModels
                     {
                         try
                         {
-                            text = await _rewordService.RewordAsync(text, _settings.RewordingApiKey, _settings.RewordingHost, _settings.RewordingModel, _inputLanguage, prompt.Instructions);
+                            // Use the dynamically selected rewording variables
+                            text = await _rewordService.RewordAsync(text, rewordApiKey, rewordHost, rewordModel, _inputLanguage, prompt.Instructions);
                         }
                         catch (Exception ex)
                         {
-                            // fallback to output error but keep text
                             text += $"\n[Error applying prompt '{prompt.Name}': {ex.Message}]\n";
                         }
                     }
                 }
+                // ... rest of the method remains unchanged ...
 
                 OnTranscribedTextReceived?.Invoke(text);
 
@@ -694,7 +793,8 @@ namespace AIDictationApp.ViewModels
 
             try
             {
-                var improved = await _rewordService.RewordAsync(original, _settings.RewordingApiKey, _settings.RewordingHost, _settings.RewordingModel, _inputLanguage, "");
+                var (apiKey, host, model) = GetRewordingConfig();
+                var improved = await _rewordService.RewordAsync(original, apiKey, host, model, _inputLanguage, "");
 
                 if (hasSelection)
                 {

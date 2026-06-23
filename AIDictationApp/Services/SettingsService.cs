@@ -36,9 +36,14 @@ namespace AIDictationApp.Services
             }
 
             AppSettings settings;
+            var hasTranscriptionProvider = false;
+            var hasRewordingProvider = false;
             try
             {
                 var json = File.ReadAllText(_settingsPath);
+                using var document = JsonDocument.Parse(json);
+                hasTranscriptionProvider = document.RootElement.TryGetProperty(nameof(AppSettings.TranscriptionProvider), out _);
+                hasRewordingProvider = document.RootElement.TryGetProperty(nameof(AppSettings.RewordingProvider), out _);
                 settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
             }
             catch
@@ -56,6 +61,30 @@ namespace AIDictationApp.Services
             {
                 settings.TranscriptionApiKey = settings.OpenAIApiKey;
                 settings.RewordingApiKey = settings.OpenAIApiKey;
+            }
+
+            // Migrate legacy single provider selection into per-task provider settings.
+            if (!hasTranscriptionProvider)
+            {
+                settings.TranscriptionProvider = settings.SelectedProvider;
+            }
+
+            if (!hasRewordingProvider)
+            {
+                settings.RewordingProvider = settings.SelectedProvider;
+            }
+
+            // Migrate legacy Gemini defaults that can cause invalid-model errors.
+            if (string.IsNullOrWhiteSpace(settings.GeminiTranscriptionModel) ||
+                string.Equals(settings.GeminiTranscriptionModel, "gemini-3.1-pro-preview", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.GeminiTranscriptionModel = "gemini-3.1-pro-preview";
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.GeminiRewordingModel) ||
+                string.Equals(settings.GeminiRewordingModel, "gemini-3.1-pro-preview", StringComparison.OrdinalIgnoreCase))
+            {
+                settings.GeminiRewordingModel = "gemini-3.1-pro-preview";
             }
 
             return settings;
